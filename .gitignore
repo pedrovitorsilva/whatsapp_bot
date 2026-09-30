@@ -1,3 +1,4 @@
 .env
 waha-sessions/
 n8n-data/
+.claude
