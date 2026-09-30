@@ -1,0 +1,60 @@
+{
+  "id": "wfEscalasAlerta1",
+  "name": "Escalas C - Alertas de erro",
+  "active": false,
+  "nodes": [
+    {
+      "id": "63b7a2ec-7bf7-520b-add0-ed58daed9bdd",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ef606855-d99f-5216-8284-eeead62c4cbf",
+      "name": "Email alerta",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        250,
+        0
+      ],
+      "parameters": {
+        "fromEmail": "__ALERT_EMAIL__",
+        "toEmail": "__ALERT_EMAIL__",
+        "subject": "=[escalas] Erro no workflow {{ $json.workflow.name }}",
+        "emailFormat": "text",
+        "text": "=Workflow: {{ $json.workflow.name }}\nNó: {{ $json.execution.lastNodeExecuted }}\nErro: {{ $json.execution.error.message }}\nExecução: {{ $json.execution.url }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "__CRED_SMTP__",
+          "name": "SMTP alertas"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Email alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bahia"
+  },
+  "pinData": {}
+}

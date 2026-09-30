@@ -1,0 +1,355 @@
+{
+  "id": "wfEscalasMencao1",
+  "name": "Escalas B - Resposta a menções",
+  "active": false,
+  "nodes": [
+    {
+      "id": "cd59482b-8caf-5772-8257-388c7f561e3f",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "__HOOK_SECRET__",
+        "options": {}
+      },
+      "webhookId": "d8afb1c8-befc-5911-a221-caaaab0abee8"
+    },
+    {
+      "id": "f2a1a0d5-4eab-53b2-a051-236478189551",
+      "name": "Code: filtrar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const m = $json.body?.payload ?? {};\nconst BOTS = ['__NUMERO_DO_BOT__', '__BOT_LID__'];               // grupos com addressingMode 'lid' mencionam pelo LID\nconst GROUP = '__GROUP_ID__';\n\nif (!m.id || m.fromMe || m.from !== GROUP) return [];\n\n// deduplica reentrega do webhook (só vale com o workflow ativo)\nconst s = $getWorkflowStaticData('global');\ns.vistos ??= [];\nif (s.vistos.includes(m.id)) return [];\ns.vistos = [...s.vistos.slice(-200), m.id];\n\n// NOWEB: mentionedIds vem null; as menções estão no contextInfo da mensagem crua\nconst ctx = Object.values(m._data?.message ?? {}).find(x => x?.contextInfo)?.contextInfo;\nconst ids = [...(m.mentionedIds ?? []), ...(ctx?.mentionedJid ?? [])].map(String);\nconst marcado = BOTS.some(b => ids.some(x => x.includes(b)) || String(m.body).includes('@' + b));\nif (!marcado) return [];\n\n// remetente: o campo que não for @lid (participantAlt traz o número quando o grupo usa LID)\nconst k = m._data?.key ?? {};\nconst quem = [k.participantAlt, m.participant, k.participant, m.author].find(x => x && !String(x).endsWith('@lid'));\nconst num = String(quem ?? '').replace(/\\D/g, '');\nreturn [{ json: { num } }];\n"
+      }
+    },
+    {
+      "id": "4fa16dff-86e4-5afe-a6df-c0ce4a90307d",
+      "name": "Pessoas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        400,
+        0
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Pessoas",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "3f8e840b-a201-598e-b3a1-b18e59edc78a",
+      "name": "Escalas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Escala",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "1a21a651-79bf-5e97-807b-fc9768730e94",
+      "name": "Trocas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        800,
+        0
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Trocas",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "1b1fdf56-72ac-52e8-9657-724e367a5173",
+      "name": "Mensagens",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Mensagens",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "2e733d6f-b582-5173-94aa-0025ea70ed4d",
+      "name": "Code: responder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// cabeçalhos e valores da planilha: 'Data de Referência' -> 'data_de_referência'\nconst norm = s => String(s ?? '').trim().toLowerCase().replace(/ /g, '_');\nconst rows = n => $(n).all().map(i => Object.fromEntries(Object.entries(i.json).map(([k, v]) => [norm(k), v])));\n// data do Sheets: '26/09/2026' (formatada) ou serial numérico -> '2026-09-26'\nconst iso = v => typeof v === 'number' ? DateTime.fromISO('1899-12-30').plus({ days: v }).toISODate()\n                                       : String(v ?? '').trim().split('/').reverse().join('-');\nconst preencher = (t, vars) => t.replace(/\\{\\{([^}]+)\\}\\}/g, (m, k) => vars[k.trim()] ?? m);\nconst msg = t => rows('Mensagens').find(m => norm(m.tipo) === t).mensagem;\nconst tr = rows('Trocas').filter(t => norm(t.status) === 'aprovada');\nconst efetivo = (nome, dia) => tr.find(t => t.pessoa_original === nome && iso(t['data_de_referência']) === dia)?.pessoa_substituta ?? nome;\n\nconst hora = v => typeof v === 'number' ? DateTime.fromISO('2000-01-01').plus({ minutes: Math.round(v * 1440) }).toFormat('HH:mm')\n                                        : String(v ?? '').trim();\n\nconst num = $('Code: filtrar').first().json.num;\nconst pessoa = rows('Pessoas').find(p => String(p.telefone).replace(/\\D/g, '') === num);\nif (!pessoa) return [];                                          // remetente desconhecido: silêncio\n\nconst hoje = $now.toISODate();\nconst prox = rows('Escalas')\n  .map(e => { const dia = iso(e.data); return { dia, horario: hora(e['horário']), nome: efetivo(e.nome, dia) }; })\n  .filter(e => e.nome === pessoa.nome && e.dia >= hoje)\n  .sort((a, b) => a.dia.localeCompare(b.dia))[0];\n\nconst texto = preencher(msg(prox ? 'próxima' : 'sem_escala'), {\n  pessoa: '@' + num,\n  data: prox ? prox.dia.split('-').reverse().join('/') : '',\n  horario: prox?.horario ?? '',\n});\nreturn [{ json: { texto, mentions: [num + '@c.us'] } }];\n"
+      }
+    },
+    {
+      "id": "03848b48-ba37-504a-a053-6e46971f27b2",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "amount": "={{ 3 + Math.random()*5 }}",
+        "unit": "seconds"
+      },
+      "webhookId": "0a70028c-1149-5f3e-b976-293c25127c59"
+    },
+    {
+      "id": "17c27d57-d9c2-52f7-bc6b-c5249ecae85d",
+      "name": "sendText",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ session: 'default', chatId: '__GROUP_ID__', text: $json.texto, mentions: ($json.mentions).length ? $json.mentions : undefined }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CRED_WAHA__",
+          "name": "WAHA API Key"
+        }
+      },
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "ecb57a45-e5a0-5897-80fd-148301cdf595",
+      "name": "Alerta erro envio",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1850,
+        100
+      ],
+      "parameters": {
+        "fromEmail": "__ALERT_EMAIL__",
+        "toEmail": "__ALERT_EMAIL__",
+        "subject": "[escalas] Falha ao responder menção",
+        "emailFormat": "text",
+        "text": "=Falha no sendText do WAHA.\n\nErro: {{ JSON.stringify($json.error ?? $json) }}\n\nTexto que deveria sair:\n{{ $('Code: responder').item.json.texto }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "__CRED_SMTP__",
+          "name": "SMTP alertas"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code: filtrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: filtrar": {
+      "main": [
+        [
+          {
+            "node": "Pessoas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pessoas": {
+      "main": [
+        [
+          {
+            "node": "Escalas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalas": {
+      "main": [
+        [
+          {
+            "node": "Trocas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trocas": {
+      "main": [
+        [
+          {
+            "node": "Mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagens": {
+      "main": [
+        [
+          {
+            "node": "Code: responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: responder": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "sendText",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sendText": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Alerta erro envio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bahia",
+    "errorWorkflow": "wfEscalasAlerta1"
+  },
+  "pinData": {}
+}

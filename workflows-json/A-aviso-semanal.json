@@ -1,0 +1,582 @@
+{
+  "id": "wfEscalasAviso01",
+  "name": "Escalas A - Aviso semanal e lembretes",
+  "active": false,
+  "nodes": [
+    {
+      "id": "c8783541-4671-594c-90fb-50710617d6da",
+      "name": "Trigger semanal",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18-23 * * 4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c058b8c0-2213-5541-8476-5d5989f32592",
+      "name": "Trigger lembrete",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 18-23 * * 5,6"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4fa16dff-86e4-5afe-a6df-c0ce4a90307d",
+      "name": "Pessoas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        250,
+        100
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Pessoas",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "3f8e840b-a201-598e-b3a1-b18e59edc78a",
+      "name": "Escalas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        450,
+        100
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Escala",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "1a21a651-79bf-5e97-807b-fc9768730e94",
+      "name": "Trocas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        650,
+        100
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Trocas",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "055fc60b-704c-523f-bbac-fc710d660fec",
+      "name": "Envios",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        850,
+        100
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Envios",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      },
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "1b1fdf56-72ac-52e8-9657-724e367a5173",
+      "name": "Mensagens",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1050,
+        100
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Mensagens",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "4b398795-36df-57a5-ad89-77e2db82193f",
+      "name": "Code: montar aviso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        100
+      ],
+      "parameters": {
+        "jsCode": "// cabeçalhos e valores da planilha: 'Data de Referência' -> 'data_de_referência'\nconst norm = s => String(s ?? '').trim().toLowerCase().replace(/ /g, '_');\nconst rows = n => $(n).all().map(i => Object.fromEntries(Object.entries(i.json).map(([k, v]) => [norm(k), v])));\n// data do Sheets: '26/09/2026' (formatada) ou serial numérico -> '2026-09-26'\nconst iso = v => typeof v === 'number' ? DateTime.fromISO('1899-12-30').plus({ days: v }).toISODate()\n                                       : String(v ?? '').trim().split('/').reverse().join('-');\nconst preencher = (t, vars) => t.replace(/\\{\\{([^}]+)\\}\\}/g, (m, k) => vars[k.trim()] ?? m);\nconst msg = t => rows('Mensagens').find(m => norm(m.tipo) === t).mensagem;\nconst tr = rows('Trocas').filter(t => norm(t.status) === 'aprovada');\nconst efetivo = (nome, dia) => tr.find(t => t.pessoa_original === nome && iso(t['data_de_referência']) === dia)?.pessoa_substituta ?? nome;\n\nconst pessoas = rows('Pessoas');\nconst env = rows('Envios');\n\nconst semanal = $('Trigger semanal').isExecuted;                 // qual cron disparou\nconst tipo = semanal ? 'semanal' : 'lembrete';\nconst hoje = $now.toISODate(), limite = $now.plus({ days: 6 }).toISODate();\n\n// próximo culto nos próximos 7 dias\nconst esc = rows('Escalas').map(e => ({ ...e, dia: iso(e.data) })).filter(e => e.dia >= hoje && e.dia <= limite);\nif (!esc.length) return [];\nconst dia = esc.map(e => e.dia).sort()[0];\n\nconst chave = semanal ? dia : hoje;                              // semanal: 1 por culto; lembrete: 1 por dia\nif (env.some(x => norm(x.tipo) === tipo && iso(x['data_de_referência']) === chave)) return [];\n\nconst efet = esc.filter(e => e.dia === dia).map(e => ({ nome: efetivo(e.nome, dia), funcao: String(e['função'] ?? '').trim() }));\nconst fone = nome => String(pessoas.find(p => p.nome === nome)?.telefone ?? '').replace(/\\D/g, '');\nconst mentions = [];\nconst marca = e => {\n  const n = fone(e.nome);\n  if (n) mentions.push(n + '@c.us');\n  return n ? '@' + n : e.nome;                                   // sem telefone: só o nome\n};\nconst grupo = f => efet.filter(e => e.funcao === f).map(marca).join(', ');\nconst lista = efet.map(marca).join(', ');\n\nconst texto = preencher(msg(tipo), {\n  data: dia.split('-').reverse().slice(0, 2).join('/'), lista,\n  'Lideranças': grupo('Liderança'), Volantes: grupo('Volante'), Membros: grupo('Membro'),\n});\nreturn [{ json: { tipo, data_referencia: chave, status: 'ENVIANDO', criado_em: $now.toISO(),\n                  texto, mentions: [...new Set(mentions)] } }];\n"
+      }
+    },
+    {
+      "id": "d00e9841-88f6-5883-9d53-1dd50a37e75f",
+      "name": "Append Envios",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1450,
+        100
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Envios",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Tipo": "={{ $json.tipo }}",
+            "Data de Referência": "={{ $json.data_referencia }}",
+            "Status": "={{ $json.status }}",
+            "Criado Em": "={{ $json.criado_em }}",
+            "Texto": "={{ $json.texto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data de Referência",
+              "displayName": "Data de Referência",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Criado Em",
+              "displayName": "Criado Em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Texto",
+              "displayName": "Texto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      }
+    },
+    {
+      "id": "17c27d57-d9c2-52f7-bc6b-c5249ecae85d",
+      "name": "sendText",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1650,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://waha:3000/api/sendText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ session: 'default', chatId: '__GROUP_ID__', text: $('Code: montar aviso').item.json.texto, mentions: ($('Code: montar aviso').item.json.mentions).length ? $('Code: montar aviso').item.json.mentions : undefined }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "__CRED_WAHA__",
+          "name": "WAHA API Key"
+        }
+      },
+      "retryOnFail": false,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "d4060ae1-e54d-507e-b88c-8485bbd616d8",
+      "name": "Update Envios",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1900,
+        0
+      ],
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "__SHEET_ID__",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Envios",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Criado Em": "={{ $('Code: montar aviso').item.json.criado_em }}",
+            "Status": "ENVIADO"
+          },
+          "matchingColumns": [
+            "Criado Em"
+          ],
+          "schema": [
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data de Referência",
+              "displayName": "Data de Referência",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Criado Em",
+              "displayName": "Criado Em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Texto",
+              "displayName": "Texto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "credentials": {
+        "googleApi": {
+          "id": "__CRED_GOOGLE__",
+          "name": "Google Sheets (conta de serviço)"
+        }
+      }
+    },
+    {
+      "id": "ecb57a45-e5a0-5897-80fd-148301cdf595",
+      "name": "Alerta erro envio",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1900,
+        200
+      ],
+      "parameters": {
+        "fromEmail": "__ALERT_EMAIL__",
+        "toEmail": "__ALERT_EMAIL__",
+        "subject": "[escalas] Falha no envio (Envios ficou ENVIANDO)",
+        "emailFormat": "text",
+        "text": "=Falha no sendText do WAHA.\n\nErro: {{ JSON.stringify($json.error ?? $json) }}\n\nTexto que deveria sair:\n{{ $('Code: montar aviso').item.json.texto }}",
+        "options": {}
+      },
+      "credentials": {
+        "smtp": {
+          "id": "__CRED_SMTP__",
+          "name": "SMTP alertas"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Pessoas": {
+      "main": [
+        [
+          {
+            "node": "Escalas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalas": {
+      "main": [
+        [
+          {
+            "node": "Trocas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trocas": {
+      "main": [
+        [
+          {
+            "node": "Envios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envios": {
+      "main": [
+        [
+          {
+            "node": "Mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagens": {
+      "main": [
+        [
+          {
+            "node": "Code: montar aviso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: montar aviso": {
+      "main": [
+        [
+          {
+            "node": "Append Envios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Envios": {
+      "main": [
+        [
+          {
+            "node": "sendText",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger semanal": {
+      "main": [
+        [
+          {
+            "node": "Pessoas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger lembrete": {
+      "main": [
+        [
+          {
+            "node": "Pessoas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sendText": {
+      "main": [
+        [
+          {
+            "node": "Update Envios",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alerta erro envio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bahia",
+    "errorWorkflow": "wfEscalasAlerta1"
+  },
+  "pinData": {}
+}

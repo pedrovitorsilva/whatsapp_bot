@@ -1,0 +1,27 @@
+services:
+  waha:
+    image: devlikeapro/waha:noweb-2026.9.1          # Core, só engine NOWEB; leia o changelog antes de subir a tag
+    restart: unless-stopped
+    ports: ["127.0.0.1:3000:3000"]                # dashboard/Swagger só local
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+      WAHA_API_KEY: ${WAHA_API_KEY}
+      WAHA_DASHBOARD_USERNAME: ${DASH_USER}
+      WAHA_DASHBOARD_PASSWORD: ${DASH_PASS}
+      WHATSAPP_START_SESSION: default
+      WHATSAPP_HOOK_URL: http://n8n:5678/webhook/${HOOK_SECRET}
+      WHATSAPP_HOOK_EVENTS: message
+    volumes:
+      - ./waha-sessions:/app/.sessions            # sessão do WhatsApp (credencial!)
+
+  n8n:
+    image: n8nio/n8n:2.40.7
+    restart: unless-stopped
+    ports: ["127.0.0.1:5678:5678"]
+    environment:
+      GENERIC_TIMEZONE: America/Bahia
+      TZ: America/Bahia
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}   # guarde: sem ela, credenciais viram lixo
+    volumes:
+      - ./n8n-data:/home/node/.n8n
+    depends_on: [waha]
